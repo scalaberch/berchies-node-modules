@@ -1,0 +1,16 @@
+{
+  "spaces": true,
+  "indentation": 2,
+  "dialect": "mysql",
+  "lang": "ts",
+  "noAlias": false,
+  "noInitModels": false,
+  "noWrite": false,
+  "views": false,
+  "singularize": true,
+  "useDefine": true,
+  "noIndexes": true,
+  "caseModel": "p",
+  "caseFile": "p",
+  "caseProp": "c"
+}

@@ -1,0 +1,60 @@
+import _ from 'lodash'
+// import { Prisma, PrismaClient } from "@prisma/client"
+import { Prisma, PrismaClient } from "@src/database/mysql"
+import { PrismaMysqlTable } from "@modules/database/mysql/prisma/table"
+import { db as database } from "@modules/database/mysql"
+
+type tableNameTableType = Prisma.tableNameDelegate
+type tableNameCreateInput = Partial<Prisma.tableNameCreateInput>;
+type tableNameUpdateInput = Partial<Prisma.tableNameUpdateInput>;
+
+export const dbTableName = 'tableName';
+export const modelClassName = 'TemplateTableName';
+export const TemplateTableNameFields = {
+  field: 'value'
+}
+
+export class TemplateTableName extends PrismaMysqlTable {
+  constructor(_db) {
+    super(_db, dbTableName);
+    this.setTable(_.get(_db, 'tableName'));
+    this.setPrimaryKey('primaryKey');
+    this.fields = TemplateTableNameFields;
+  }
+
+  public getTable(): tableNameTableType {
+    return super.getTable()
+  }
+
+  public setTable(table: tableNameTableType) {
+    super.setTable(table)
+  }
+
+  public create(payload: tableNameCreateInput) {
+    return super.create(payload)
+  }
+
+  public createMany (payloads: Array<tableNameCreateInput>, skipDuplicates = true) {
+    return super.createMany(payloads, skipDuplicates)
+  }
+
+  public update(id: string | number, data?: tableNameUpdateInput) {
+    return super.update(id, data)
+  }
+
+  public updateMany(ids: Array<string | number>, data?: tableNameUpdateInput) {
+    return super.updateMany(ids, data)
+  }
+}
+
+export default () => {
+  const _database = database()
+  if (_database === null) {
+    return null;
+  }
+
+  const _db = _database.database
+  return new TemplateTableName(_db);
+}
+
+
