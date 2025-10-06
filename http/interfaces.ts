@@ -33,6 +33,7 @@ export interface EBGResponse extends Response {
   outputError(message: string, payload?: any, code?: number);
   outputAsCSV(dataset: any, fileName?: string);
   outputDiscordJson(payload: any, responseType?: number, visibleOnlyToUser?: boolean);
+  redirectToUrl(url: string);
 }
 
 interface EBGJwtObject {

@@ -23,6 +23,7 @@ const googleOauthRedirect = (req: Request, res: Response) => {
 /**
  * google: callback handler used to fetch dataset.
  *
+ * @deprecated
  * @param req
  * @param res
  */

@@ -35,4 +35,6 @@ export const getEnvVariable = (variable: string, isANumber = false, defaultValue
   return value;
 };
 
+export const getEnvVar = getEnvVariable
+
 export const allowedEnvironments = ['prod', 'production', 'test', 'dev'];

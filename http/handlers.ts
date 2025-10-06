@@ -114,7 +114,6 @@ export const redirectToUrl = (res: Response, url: string, customMessage: string 
 export const generateRouteRedirectToUrl = (targetUrl = 'https://www.eyeball.games') => {
   return (req: Request, res: Response) => {
     return redirectToUrl(res, targetUrl);
-    // return res.status(301)
   }
 }
 

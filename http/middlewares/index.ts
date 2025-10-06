@@ -1,7 +1,7 @@
 import _, { isNumber } from "lodash";
 import { Express, Request, Response, NextFunction } from "express";
 import { EBGRequest, EBGResponse } from "../interfaces";
-import { output, outputSuccess, outputError, outputAsCsv, outputCreated } from "../handlers";
+import { output, outputSuccess, outputError, outputAsCsv, outputCreated, redirectToUrl } from "../handlers";
 import {
   isFromCognito,
   getDataFromAccessTokenPayload,
@@ -80,6 +80,7 @@ const applyResponseFunctions = (
   res.outputAsCSV = (dataset: any, fileName?: string) => outputAsCsv(res, dataset, fileName);
   res.outputCreated = (payload: any, message?: string) => outputCreated(res, message, payload, req.access);
   res.outputDiscordJson = (payload: any, responseType?: number, visibleOnlyToUser?: boolean) => outputAsJson(res, payload, responseType, visibleOnlyToUser);
+  res.redirectToUrl = (url: string) => redirectToUrl(res, url)
 
   next();
 };

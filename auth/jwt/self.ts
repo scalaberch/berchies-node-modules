@@ -1,12 +1,15 @@
 import _ from "lodash";
-import { env, getEnvVariable as getEnv } from "../../env";
+import cache from "@modules/cache";
+import { getEnvVariable as getEnv } from "../../env";
 import jwt, { JwtPayload, TokenExpiredError } from "jsonwebtoken";
 import { NextFunction, Request, Response } from "express";
 import { v4 as uuidv4 } from "uuid";
 import { getAuthBearerToken, getAuthTokenFromUrl } from "../index";
 
-// some required algorithms
+// some required variables
 const algorithm = "HS256";
+const invalidAccessTokenPrefix = "invalidAccessTokens";
+const invalidRefreshTokenPrefix = "invalidRefreshTokens";
 
 // tokens and expiry configuration
 export const ACCESS_SECRET: string = getEnv("JWT_ACCESS_SECRET", false, "");
@@ -27,46 +30,14 @@ interface BaseJWTPayload {
   sid?: string; // session id
 }
 
-/**
- * express middleware for authenticating jwt's
- *
- * @todo: refactor this
- * @param req
- * @param res
- * @param next
- * @returns
- */
-const authenticateAccessToken = (req: Request, res: Response, next: NextFunction) => {
-  const auth = req.headers["authorization"];
-  if (!auth) {
-    return res.status(401).json({ error: "Missing access token" });
-  }
-
-  // Split on space once: "Bearer <token>"
-  const parts = auth.split(" ");
-  if (parts.length !== 2) {
-    return res.status(401).json({ error: "Malformed authorization header" });
-  }
-
-  const [scheme, token] = parts;
-
-  if (!/^bearer$/i.test(scheme)) {
-    // ^bearer$ with /i flag = matches any case variant
-    return res.status(401).json({ error: "Invalid authorization scheme" });
-  }
-
-  jwt.verify(token, ACCESS_SECRET, (err, decoded) => {
-    if (err) {
-      return res.status(401).json({ error: "Invalid or expired access token" });
-    }
-    // @todo: attach decoded jwt
-    // req.user = decoded; // attach user info
-
-    next();
-  });
-};
+enum JWTKind {
+  access,
+  refresh,
+}
 
 /**
+ * express middleware to parse jwt refresh tokens during route calls.
+ * most likely being used on token refresh action
  *
  * @param req
  * @param res
@@ -97,6 +68,7 @@ export const preflightRefreshToken = (
 };
 
 /**
+ * express middleware to parse jwt access tokens during route calls
  *
  * @param req
  * @param res
@@ -119,13 +91,13 @@ export const preflightAccessToken = (req: Request, res: Response, next: NextFunc
   } catch (error) {
     let errorType = "jwt_decode_error";
     let message = error.message;
-    // console.error(error);
 
     if (error instanceof TokenExpiredError) {
       errorType = "token_expired";
       message = "Token has already expired.";
     }
 
+    // console.error(error);
     return res.status(401).json({ message, error: errorType });
   }
 };
@@ -142,7 +114,7 @@ export const preflightAccessToken = (req: Request, res: Response, next: NextFunc
 export const generateAccessToken = (
   sub: string | number,
   payload = {},
-  issuer = "http://api.localhost",
+  issuer = "http://localhost",
   audience = ""
 ) => {
   const jti = uuidv4();
@@ -199,3 +171,62 @@ export const generateRefreshToken = (
 
   return { jti, token };
 };
+
+/**
+ * checks if a given jwt is inside the invalid list in cache.
+ * if cache is not enabled, then automatically it's assumed valid.
+ * 
+ * @param token 
+ * @param tokenType 
+ * @returns 
+ */
+const isTokenInvalid = async (token: string, tokenType: JWTKind) => {
+  if (!cache.isCacheActive()) {
+    // Cache is inactive — assume token is valid
+    return false;
+  }
+
+  const prefix =
+    tokenType === JWTKind.refresh ? invalidRefreshTokenPrefix : invalidAccessTokenPrefix;
+  return await cache.keyExists(`${prefix}:${token}`);
+};
+
+/**
+ * checks if access token is in the invalidated list.
+ * 
+ * @param accessToken 
+ * @returns 
+ */
+const isAccessTokenInvalid = (accessToken: string) => isTokenInvalid(accessToken, JWTKind.access);
+
+/**
+ * checks if refresh token is in the invalidated list.
+ * 
+ * @param refreshToken 
+ * @returns 
+ */
+const isRefreshTokenInvalid = async (refreshToken: string) => isTokenInvalid(refreshToken, JWTKind.refresh);
+
+
+
+const makeTokenInvalid = async (token: string, tokenType: JWTKind) => {
+  if (!cache.isCacheActive()) {
+    return false;
+  }
+
+  // decode it
+  try {
+    const secret = tokenType === JWTKind.access ? ACCESS_SECRET : REFRESH_SECRET
+    const decoded = jwt.verify(token, secret);
+    console.log(decoded)
+  } catch (error) {
+
+  }
+}
+
+
+
+const makeAccessTokenInvalid = (accessToken: string) => makeTokenInvalid(accessToken, JWTKind.access);
+
+const makeRefreshTokenInvalid = (refreshToken: string) => makeTokenInvalid(refreshToken, JWTKind.access);
+
