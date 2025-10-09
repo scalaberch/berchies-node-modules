@@ -13,6 +13,7 @@ import TransactionLog, { enableTransactionLog } from "./transaction";
 
 /**
  * define constants
+ * 
  */
 const env = process.env.ENV || "";
 const disableLogFlag = parseInt(process.env.EBG_LOGGER_DISABLE_LOG || "") == 1;

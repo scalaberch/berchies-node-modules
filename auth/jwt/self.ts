@@ -1,10 +1,12 @@
 import _ from "lodash";
+import moment from "moment-timezone";
 import cache from "@modules/cache";
 import { getEnvVariable as getEnv } from "../../env";
 import jwt, { JwtPayload, TokenExpiredError } from "jsonwebtoken";
 import { NextFunction, Request, Response } from "express";
 import { v4 as uuidv4 } from "uuid";
 import { getAuthBearerToken, getAuthTokenFromUrl } from "../index";
+import { timestampFormat } from "@modules/constants";
 
 // some required variables
 const algorithm = "HS256";
@@ -75,7 +77,11 @@ export const preflightRefreshToken = (
  * @param next
  * @returns
  */
-export const preflightAccessToken = (req: Request, res: Response, next: NextFunction) => {
+export const preflightAccessToken = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const accessToken = getAuthBearerToken(req);
   if (accessToken === "") {
     return res
@@ -85,6 +91,16 @@ export const preflightAccessToken = (req: Request, res: Response, next: NextFunc
 
   try {
     const decoded = jwt.verify(accessToken, ACCESS_SECRET);
+
+    // check first if token is force validated.
+    const isInvalidated = await isAccessTokenInvalid(accessToken);
+    if (isInvalidated) {
+      return res
+        .status(401)
+        .json({ message: "Token is already invalidated.", error: "token_invalidated" });
+    }
+
+    // assign to request
     _.set(req, "accessTokenData", decoded);
     _.set(req, "accessToken", accessToken);
     next();
@@ -175,10 +191,10 @@ export const generateRefreshToken = (
 /**
  * checks if a given jwt is inside the invalid list in cache.
  * if cache is not enabled, then automatically it's assumed valid.
- * 
- * @param token 
- * @param tokenType 
- * @returns 
+ *
+ * @param token
+ * @param tokenType
+ * @returns
  */
 const isTokenInvalid = async (token: string, tokenType: JWTKind) => {
   if (!cache.isCacheActive()) {
@@ -188,45 +204,72 @@ const isTokenInvalid = async (token: string, tokenType: JWTKind) => {
 
   const prefix =
     tokenType === JWTKind.refresh ? invalidRefreshTokenPrefix : invalidAccessTokenPrefix;
-  return await cache.keyExists(`${prefix}:${token}`);
+  const keyExists = await cache.keyExists(`${prefix}:${token}`)
+  return keyExists;
 };
 
 /**
  * checks if access token is in the invalidated list.
- * 
- * @param accessToken 
- * @returns 
+ *
+ * @param accessToken
+ * @returns
  */
-const isAccessTokenInvalid = (accessToken: string) => isTokenInvalid(accessToken, JWTKind.access);
+export const isAccessTokenInvalid = (accessToken: string) =>
+  isTokenInvalid(accessToken, JWTKind.access);
 
 /**
  * checks if refresh token is in the invalidated list.
- * 
- * @param refreshToken 
- * @returns 
+ *
+ * @param refreshToken
+ * @returns
  */
-const isRefreshTokenInvalid = async (refreshToken: string) => isTokenInvalid(refreshToken, JWTKind.refresh);
+export const isRefreshTokenInvalid = async (refreshToken: string) =>
+  isTokenInvalid(refreshToken, JWTKind.refresh);
 
-
-
+/**
+ *
+ * @param token
+ * @param tokenType
+ * @returns
+ */
 const makeTokenInvalid = async (token: string, tokenType: JWTKind) => {
   if (!cache.isCacheActive()) {
     return false;
   }
 
-  // decode it
   try {
-    const secret = tokenType === JWTKind.access ? ACCESS_SECRET : REFRESH_SECRET
+    const prefix =
+      tokenType === JWTKind.refresh
+        ? invalidRefreshTokenPrefix
+        : invalidAccessTokenPrefix;
+
+    const secret = tokenType === JWTKind.access ? ACCESS_SECRET : REFRESH_SECRET;
     const decoded = jwt.verify(token, secret);
-    console.log(decoded)
+
+    // get important information
+    const jti = _.get(decoded, "jti", "");
+    const sub = _.get(decoded, "sub", "");
+
+    const now = Number(moment().format("X"));
+    const exp = _.get(decoded, "exp", 0);
+    const remainingTime = exp - now;
+
+    await cache.set(`${prefix}:${token}`, jti, { EX: remainingTime });
   } catch (error) {
-
+    console.error(`invalidation error: `, error);
+    return false;
   }
-}
 
+  return true;
+};
 
+/**
+ *
+ * @param accessToken
+ * @returns
+ */
+export const makeAccessTokenInvalid = (accessToken: string) =>
+  makeTokenInvalid(accessToken, JWTKind.access);
 
-const makeAccessTokenInvalid = (accessToken: string) => makeTokenInvalid(accessToken, JWTKind.access);
-
-const makeRefreshTokenInvalid = (refreshToken: string) => makeTokenInvalid(refreshToken, JWTKind.access);
-
+export const makeRefreshTokenInvalid = (refreshToken: string) =>
+  makeTokenInvalid(refreshToken, JWTKind.access);

@@ -64,6 +64,8 @@ const create = (config: any, appModules?: any) => {
     Session(server, appModules);
   }
 
+  // setup public folder
+
   // setup routing
   routes(server, httpModules, appModules);
 

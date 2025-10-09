@@ -270,7 +270,7 @@ export class MysqlTable {
   public async paginate(
     page = 1,
     pageCount = 10,
-    queryBuilderTransformer?: Function,
+    queryBuilderTransformer?: (qb: SelectQueryBuilder<any, any, any>) => SelectQueryBuilder<any, any, any>,
     selectFields = []
   ) {
     const db = this.getDbInstance();
@@ -584,10 +584,16 @@ export class MysqlTable {
   /**
    * creates a kysely object for `SELECT` query
    *
+   * @param alias - makes an alias on the sql statement (i.e. tableName as alias)
    * @returns
    */
-  public createSelectQuery() {
-    return this.getDbInstance().selectFrom(this.getTableName());
+  public createSelectQuery(alias = "") {
+    let tableName = this.getTableName();
+    if (alias.length > 0) {
+      tableName += ` as ${alias}`;
+    }
+
+    return this.getDbInstance().selectFrom(tableName);
   }
 
   /**

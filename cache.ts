@@ -1,27 +1,27 @@
-import { env, getEnv } from './env';
-import { createClient, RedisClientType } from 'redis';
-import ohash from 'object-hash';
-import { Request } from 'express';
-import zlib from 'zlib';
-import { getAppInstance } from './server/index';
-import Redlock from 'redlock';
-import { v4 as uuidv4 } from 'uuid';
-import { getEnvVariable } from '@modules/env';
+import { env, getEnv } from "./env";
+import { createClient, RedisClientType } from "redis";
+import ohash from "object-hash";
+import { Request } from "express";
+import zlib from "zlib";
+import { getAppInstance } from "./server/index";
+import Redlock from "redlock";
+import { v4 as uuidv4 } from "uuid";
+import { getEnvVariable } from "@modules/env";
 
-const _host = env.REDIS_HOST || '127.0.0.1';
-const _user = env.REDIS_USER || '';
-const _pass = env.REDIS_PASSWORD || '';
+const _host = env.REDIS_HOST || "127.0.0.1";
+const _user = env.REDIS_USER || "";
+const _pass = env.REDIS_PASSWORD || "";
 const _port = parseInt(env.REDIS_PORT) || 6379;
 
-let _client;
+let _client: RedisClientType;
 let _lock: Redlock;
 
 const _env = getEnv();
 const _defaultLockTime = 120000; // 2 minutes
-const lockPrefix = `ebg_lock-${getEnvVariable('PROJ_NAME')}:`;
+const lockPrefix = `ebg_lock-${getEnvVariable("PROJ_NAME")}:`;
 
-const getCache = () => {
-  const cacheObject = getAppInstance('cache');
+const getCache = (): RedisClientType => {
+  const cacheObject = getAppInstance("cache");
   if (cacheObject === null) {
     return null;
   }
@@ -38,8 +38,12 @@ const getLockHandler = () => _lock;
 const generateUrl = (): string => {
   // let credentials = [REDIS_USER, REDIS_PASSWORD].join('@');
   const hasUser = _user.length > 0;
-  const credentials = `${hasUser ? _user : ''}${_pass.length > 0 ? `${hasUser ? ':' : ''}${_pass}` : ''}`;
-  const url = `redis://${credentials.length > 0 ? `${credentials}@` : ''}${_host}:${_port}`;
+  const credentials = `${hasUser ? _user : ""}${
+    _pass.length > 0 ? `${hasUser ? ":" : ""}${_pass}` : ""
+  }`;
+  const url = `redis://${
+    credentials.length > 0 ? `${credentials}@` : ""
+  }${_host}:${_port}`;
   return url;
 };
 
@@ -55,7 +59,7 @@ const init = async () => {
     _client = createClient({ url });
 
     // create lock client
-    _lock = new Redlock([_client], {
+    _lock = new Redlock([_client as any], {
       driftFactor: 0.01, // recommended drift factor
       retryCount: 20,
       retryDelay: 400,
@@ -183,7 +187,8 @@ const keyExists = async (key: string) => {
   }
 
   const exists = await _cache.exists(key);
-  return exists !== null;
+  // return exists !== null;
+  return exists > 0;
 };
 
 // delete a key from the cache
@@ -196,7 +201,7 @@ const del = (key: string) => {
   return _cache.del(key);
 };
 
-const countHashKeys = async (pattern = '*') => {
+const countHashKeys = async (pattern = "*") => {
   let cursor = 0;
   let count = 0;
 
@@ -206,11 +211,23 @@ const countHashKeys = async (pattern = '*') => {
   }
 
   do {
-    const { cursor: nextCursor, keys } = await _cache.scan(cursor, 'MATCH', pattern, 'COUNT', 100);
+    // const { cursor: nextCursor, keys } = await _cache.scan(
+    //   cursor,
+    //   "MATCH",
+    //   pattern,
+    //   "COUNT",
+    //   100
+    // );
+
+    const { cursor: nextCursor, keys } = await _cache.scan(cursor, {
+      MATCH: pattern,
+      COUNT: 100
+    })
+
     cursor = Number(nextCursor);
     for (const key of keys) {
       const type = await _cache.type(key);
-      if (type === 'hash') count++;
+      if (type === "hash") count++;
     }
   } while (cursor !== 0);
 

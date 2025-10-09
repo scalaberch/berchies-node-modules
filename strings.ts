@@ -40,7 +40,8 @@ export const makePossessive = (name: string) => {
 
 /**
  * generates a random UUID
- *
+ * probably just use crypto.randomUUID() ? 
+ * 
  * @returns
  */
 export const generateUUID = () => uuidv4();

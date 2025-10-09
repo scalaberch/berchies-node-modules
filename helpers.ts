@@ -359,8 +359,31 @@ export const randomNumber = (min: number, max: number) => {
   return Math.floor(Math.random() * (max - min + 1) + min);
 };
 
+/**
+ * a more secure generator for random numberes
+ *
+ * @param min
+ * @param max
+ * @returns
+ */
+export const secureRandomNumber = (min: number, max: number) => {
+  return crypto.randomInt(min, max + 1);
+};
+
+/**
+ * @deprecated
+ * @param string 
+ * @returns 
+ */
 export const stringHasBadWords = (string: string) => hasBadWords(string);
 
+/**
+ * gets the key from an object given its value.
+ * 
+ * @param obj 
+ * @param value 
+ * @returns 
+ */
 export const getKeyByValue = <T extends Record<string, unknown>>(
   obj: T,
   value: T[keyof T]
@@ -370,9 +393,11 @@ export const getKeyByValue = <T extends Record<string, unknown>>(
 /**
  * gets the current timestamp with format YYYY-MM-DD HH:mm:ss
  *
+ * @deprecated
  * @returns
  */
 export const getCurrentTimestamp = () => moment().format(timestampFormat);
+
 
 export const remotePathExists = async (path: string) => {
   try {

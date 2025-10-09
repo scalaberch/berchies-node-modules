@@ -94,13 +94,16 @@ const start = async () => {
       // Set assignment to global variable
       _app = { info, ...application, timezone, instance };
 
-      // All modules are loaded, you can now run the main function.
+      // // Then start database listener.
+      // Mysql.startListening();
+
+      // Then mark the timestamp of the server instance
+      
+
+      // Lastly, you can now run the main function.
       if (typeof main === 'function') {
         main(_app);
       }
-
-      // // Then start database listener.
-      // Mysql.startListening();
     })
     .catch((err) => {
       // Something went wrong.
