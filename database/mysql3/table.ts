@@ -1,7 +1,7 @@
 import _ from "lodash";
 import moment from "moment";
 import { v4 as uuidv4 } from "uuid";
-import { Kysely, SelectQueryBuilder, Selectable } from "kysely";
+import { Kysely, SelectQueryBuilder, Selectable, sql } from "kysely";
 import Mysql, { Db, DatabaseSchema, query } from "@modules/database/mysql3";
 
 import { timestampFormat } from "@modules/constants";
@@ -133,7 +133,10 @@ export class MysqlTable {
    *
    * @returns
    */
-  public getTableName() {
+  public getTableName(alias = "") {
+    if (alias.length > 0) {
+      return `${this.tableName} as ${alias}`;
+    }
     return this.tableName;
   }
 
@@ -144,6 +147,16 @@ export class MysqlTable {
    */
   public getPrimaryKey() {
     return this.primaryKey;
+  }
+
+  /**
+   * output a raw sql. some helper function
+   * 
+   * @param rawSql 
+   * @returns 
+   */
+  public rawSql(rawSql = "") {
+    return sql<any>`${sql.raw(rawSql)}`
   }
 
   /**
@@ -270,7 +283,9 @@ export class MysqlTable {
   public async paginate(
     page = 1,
     pageCount = 10,
-    queryBuilderTransformer?: (qb: SelectQueryBuilder<any, any, any>) => SelectQueryBuilder<any, any, any>,
+    queryBuilderTransformer?: (
+      qb: SelectQueryBuilder<any, any, any>
+    ) => SelectQueryBuilder<any, any, any>,
     selectFields = []
   ) {
     const db = this.getDbInstance();

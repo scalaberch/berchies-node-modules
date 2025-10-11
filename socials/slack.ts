@@ -1,9 +1,9 @@
 import { WebClient } from "@slack/web-api"
 
 const { env } = process;
-export const slackOwnerEmail = "kieth@eyeball.gg";
+export const slackOwnerEmail = "";
 export const slackOauthToken = env.SLACK_OAUTH_TOKEN || '';
-export const defaultChannelId = 'C06JAMUDW5N'; // #bot-notification
+export const defaultChannelId = ''; // #bot-notification
 
 let web: WebClient;
 
