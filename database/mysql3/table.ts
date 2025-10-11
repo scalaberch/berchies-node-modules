@@ -1,7 +1,7 @@
 import _ from "lodash";
 import moment from "moment";
 import { v4 as uuidv4 } from "uuid";
-import { Kysely, SelectQueryBuilder, Selectable, sql } from "kysely";
+import { Kysely, SelectQueryBuilder, Selectable, sql, ExpressionBuilder } from "kysely";
 import Mysql, { Db, DatabaseSchema, query } from "@modules/database/mysql3";
 
 import { timestampFormat } from "@modules/constants";
@@ -151,12 +151,22 @@ export class MysqlTable {
 
   /**
    * output a raw sql. some helper function
-   * 
-   * @param rawSql 
-   * @returns 
+   *
+   * @deprecated
+   * @param rawSql
+   * @returns
    */
   public rawSql(rawSql = "") {
-    return sql<any>`${sql.raw(rawSql)}`
+    return sql<any>`${sql.raw(rawSql)}`;
+  }
+
+  /**
+   *
+   * @param alias
+   * @returns
+   */
+  public generateSelectCountAll(alias = "count") {
+    return sql<number>`COUNT(*)`.as(alias)
   }
 
   /**
