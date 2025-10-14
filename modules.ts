@@ -1,13 +1,27 @@
-import Http, { port as ServerPort } from './http';
-import Checkpoint from './http/checkpoint';
-import Log from './logs';
-import { config, mongo, mysql, mysql3, prisma } from './database';
-import EbgQueue from './queue';
-import Moralis from './moralis';
-import Cache from './cache';
-import Cron from './cron/v3';
-import Slack from './socials/slack';
-import Discord from './discord'
+import Http, { port as ServerPort } from "./http";
+import Checkpoint from "./http/checkpoint";
+import Log from "./logs";
+import { config, mongo, mysql, mysql3, prisma } from "./database";
+import EbgQueue from "./queue";
+import Moralis from "./moralis";
+import Cache from "./cache";
+import Cron from "./cron/v3";
+import Slack from "./socials/slack";
+import Discord from "./discord";
+
+export type Modules =
+  | "queue"
+  | "logger"
+  | "mongodb"
+  | "moralis"
+  | "cron"
+  | "cache"
+  | "slack"
+  | "checkpoint"
+  | "mysqldb"
+  | "http"
+  | "prismadb"
+  | "discord";
 
 /**
  * checkpoint api
@@ -18,8 +32,10 @@ import Discord from './discord'
  */
 const checkpoint = async (appConfig?, appModules?) => {
   const { modules } = appConfig;
-  if (modules.indexOf('http') < 0) {
-    return Promise.reject(`HTTP module is not enabled! Please enable HTTP module first before using the checkpoint module!`);
+  if (modules.indexOf("http") < 0) {
+    return Promise.reject(
+      `HTTP module is not enabled! Please enable HTTP module first before using the checkpoint module!`
+    );
   }
   return Promise.resolve(true);
 };
@@ -33,7 +49,7 @@ const checkpoint = async (appConfig?, appModules?) => {
  */
 const logger = async (appConfig?, appModules?) => {
   const log = await Log.init();
-  console.log('✔️  Logger initialized.');
+  console.log("✔️  Logger initialized.");
   return log;
 };
 
@@ -47,7 +63,7 @@ const logger = async (appConfig?, appModules?) => {
 const discord = async (appConfig?, appModules?) => {
   try {
     const discord = await Discord.init();
-    console.log('✔️  Discord initialized.');
+    console.log("✔️  Discord initialized.");
     return discord;
   } catch (err) {
     return Promise.reject(err);
@@ -64,7 +80,7 @@ const discord = async (appConfig?, appModules?) => {
 const mongodb = async (appConfig?, appModules?) => {
   try {
     const connection = await mongo.connect({});
-    console.log('✔️  MongoDB database connected.');
+    console.log("✔️  MongoDB database connected.");
 
     mongo.autoloadBaseModels();
     mongo.autoLoadModels();
@@ -85,14 +101,14 @@ const mysqldb = async (appConfig?, appModules?) => {
     let connection;
 
     const mysqlConfig = config(appConfig).mysql as any;
-    if (mysqlConfig?.provider === 'mysql3') {
+    if (mysqlConfig?.provider === "mysql3") {
       connection = await mysql3.init(mysqlConfig);
     } else {
       connection = await mysql.init(appConfig);
     }
 
     // const connection = await mysql.connect();
-    console.log('✔️  Mysql database connected.');
+    console.log("✔️  Mysql database connected.");
     return connection;
   } catch (err) {
     return Promise.reject(err);
@@ -108,7 +124,7 @@ const mysqldb = async (appConfig?, appModules?) => {
  */
 const queue = async (appConfig?, appModules?) => {
   const _queue = await EbgQueue.init();
-  console.log('✔️  SQS queue ready.');
+  console.log("✔️  SQS queue ready.");
   return _queue;
 };
 
@@ -121,7 +137,7 @@ const queue = async (appConfig?, appModules?) => {
  */
 const moralis = async (appConfig?, appModules?) => {
   const moralis = await Moralis.init();
-  console.log('✔️  Moralis is ready.');
+  console.log("✔️  Moralis is ready.");
   return moralis;
 };
 
@@ -134,7 +150,7 @@ const moralis = async (appConfig?, appModules?) => {
  */
 const slack = async (appConfig?, appModules?) => {
   const slackObj = Slack.init();
-  console.log('✔️  Slack is ready.');
+  console.log("✔️  Slack is ready.");
   return Promise.resolve(slackObj);
 };
 
@@ -192,7 +208,7 @@ const cron = async (appConfig?, appModules?) => {
 const prismadb = async (appConfig?, appModules?) => {
   try {
     const connection = await prisma.init(appConfig);
-    console.log('✔️  Prisma database connected.');
+    console.log("✔️  Prisma database connected.");
     return connection;
   } catch (err) {
     return Promise.reject(err);
@@ -214,7 +230,7 @@ export const allModules = {
   mysqldb,
   http,
   prismadb,
-  discord
+  discord,
 };
 
 /**
@@ -234,7 +250,9 @@ const loadAll = async (appConfig: any, parentApp: any) => {
   // fetch all module handlers
   for (const loadedModule of loadedModules) {
     if (!allModules.hasOwnProperty(loadedModule)) {
-      return Promise.reject(`Module '${loadedModule}' not found! Please check your modules list and try again.`);
+      return Promise.reject(
+        `Module '${loadedModule}' not found! Please check your modules list and try again.`
+      );
     }
 
     const _module = allModules[loadedModule];
