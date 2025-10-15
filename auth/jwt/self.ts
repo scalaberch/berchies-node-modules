@@ -2,11 +2,10 @@ import _ from "lodash";
 import moment from "moment-timezone";
 import cache from "@modules/cache";
 import { getEnvVariable as getEnv } from "../../env";
-import jwt, { JwtPayload, TokenExpiredError } from "jsonwebtoken";
+import jwt, { TokenExpiredError } from "jsonwebtoken";
 import { NextFunction, Request, Response } from "express";
 import { v4 as uuidv4 } from "uuid";
-import { getAuthBearerToken, getAuthTokenFromUrl } from "../index";
-import { timestampFormat } from "@modules/constants";
+import { getAuthBearerToken } from "../index";
 
 // some required variables
 const algorithm = "HS256";
@@ -22,6 +21,11 @@ export const REFRESH_EXPIRY: number = getEnv("REFRESH_TOKEN_EXPIRY", true, 25920
 // re-export stuff
 export { TokenExpiredError };
 
+enum JWTKind {
+  access,
+  refresh,
+}
+
 interface BaseJWTPayload {
   sub: string | number; // Subject (user ID)
   iat: number; // Issued At (timestamp)
@@ -30,11 +34,6 @@ interface BaseJWTPayload {
   iss: string; // Issuer - normally the url of the server
   aud: string; // Audience - who's intended for. could be random string or a url
   sid?: string; // session id
-}
-
-enum JWTKind {
-  access,
-  refresh,
 }
 
 /**
@@ -204,29 +203,12 @@ const isTokenInvalid = async (token: string, tokenType: JWTKind) => {
 
   const prefix =
     tokenType === JWTKind.refresh ? invalidRefreshTokenPrefix : invalidAccessTokenPrefix;
-  const keyExists = await cache.keyExists(`${prefix}:${token}`)
+  const keyExists = await cache.keyExists(`${prefix}:${token}`);
   return keyExists;
 };
 
 /**
- * checks if access token is in the invalidated list.
- *
- * @param accessToken
- * @returns
- */
-export const isAccessTokenInvalid = (accessToken: string) =>
-  isTokenInvalid(accessToken, JWTKind.access);
-
-/**
- * checks if refresh token is in the invalidated list.
- *
- * @param refreshToken
- * @returns
- */
-export const isRefreshTokenInvalid = async (refreshToken: string) =>
-  isTokenInvalid(refreshToken, JWTKind.refresh);
-
-/**
+ * add a token to the invalidated list.
  *
  * @param token
  * @param tokenType
@@ -264,6 +246,25 @@ const makeTokenInvalid = async (token: string, tokenType: JWTKind) => {
 };
 
 /**
+ * checks if access token is in the invalidated list.
+ *
+ * @param accessToken
+ * @returns
+ */
+export const isAccessTokenInvalid = (accessToken: string) =>
+  isTokenInvalid(accessToken, JWTKind.access);
+
+/**
+ * checks if refresh token is in the invalidated list.
+ *
+ * @param refreshToken
+ * @returns
+ */
+export const isRefreshTokenInvalid = async (refreshToken: string) =>
+  isTokenInvalid(refreshToken, JWTKind.refresh);
+
+/**
+ * make access token invalid by adding it to the invalid list
  *
  * @param accessToken
  * @returns
@@ -271,5 +272,11 @@ const makeTokenInvalid = async (token: string, tokenType: JWTKind) => {
 export const makeAccessTokenInvalid = (accessToken: string) =>
   makeTokenInvalid(accessToken, JWTKind.access);
 
+/**
+ * make refresh token invalid by adding it to the invalid list
+ *
+ * @param refreshToken
+ * @returns
+ */
 export const makeRefreshTokenInvalid = (refreshToken: string) =>
   makeTokenInvalid(refreshToken, JWTKind.access);
