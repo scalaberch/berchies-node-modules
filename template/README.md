@@ -1,0 +1,1 @@
+Here lies the template files that will be copied to the main project during initialization.

@@ -166,7 +166,7 @@ export class MysqlTable {
    * @returns
    */
   public generateSelectCountAll(alias = "count") {
-    return sql<number>`COUNT(*)`.as(alias)
+    return sql<number>`COUNT(*)`.as(alias);
   }
 
   /**
@@ -416,13 +416,60 @@ export class MysqlTable {
   }
 
   /**
+   * creates a new entry
+   *
+   * @param parameters
+   * @returns
+   */
+  public async create(parameters: any) {
+    const insertData = await this.insert(parameters);
+    if (!insertData?.isCreated) {
+      return null;
+    }
+
+    // get the data.
+    const newEntry = await this.createSelectQuery()
+      .where(this.getPrimaryKey(), "=", insertData?.insertId)
+      .executeTakeFirst();
+    
+    if (newEntry === undefined) {
+      return null;
+    }
+
+    return newEntry;
+
+
+    // const db = this.getDbInstance();
+    // const insertParameters = this.buildParameters(parameters);
+
+    // // Automatically add something in the primary key
+    // const pk = this.getPrimaryKey();
+    // insertParameters[pk] = this.primaryKeyType === "string" ? uuidv4() : null;
+
+    // // create insert statement
+    // const qb = db.insertInto(this.getTableName()).values(insertParameters);
+
+    // // insert results
+    // const insertResult = await qb.executeTakeFirst();
+    // const { insertId: newId, numInsertedOrUpdatedRows } = insertResult;
+    // const insertId =
+    //   typeof newId === "undefined" ? insertParameters[pk] : newId.toString(); // newId.toString();
+    // const isCreated = Number(numInsertedOrUpdatedRows) > 0;
+
+    // return {
+    //   insertId,
+    //   insertParameters,
+    //   isCreated,
+    // };
+  }
+
+  /**
    * executes an insert query
    *
    * @param parameters
-   * @param returnAsQueryBuilder
    * @returns
    */
-  public async create(parameters: any, returnAsQueryBuilder = false) {
+  public async insert(parameters: any) {
     const db = this.getDbInstance();
     const insertParameters = this.buildParameters(parameters);
 

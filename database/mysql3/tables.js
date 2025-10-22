@@ -5,6 +5,8 @@ const mysql = require("mysql2/promise");
 
 require("dotenv").config();
 
+const timestampFields = ["created_at", "updated_at", "deleted_at"];
+
 const classTemplate = `/**
 *
 * Auto-generated model for table <tableName>
@@ -23,30 +25,44 @@ export interface <modelName>Interface extends Partial<BaseInterface> {
 
 export class <modelName>Table extends MysqlTable {
   protected primaryKeyType = '<pkType>';
-  // private _tblObject: <modelName>Interface;  
   protected fields: (keyof <modelName>Interface)[] = <fields>;
+  protected isUuid = <isUuid>;
   // protected fieldMap = <fieldMap>;
-  protected isUuid = false;
   
-  
-
-  public create(params: <modelName>Interface) {
-    return super.create(params, false)
+  public create(params: <modelName>Interface): Promise<<modelName>Interface | null> {
+    return super.create(params)
   }
 
   public update(id: EbgMysqlIdType, params: <modelName>Interface) {
     return super.update(id, params)
   }
+
+  public create<modelName>(<paramChain>): Promise<<modelName>Interface | null> {
+    return this.create({
+      <paramColumns>
+    });
+  }
+
+  public update<modelName>(<primaryKey>: <pkType>, <paramChain>) {
+    return this.update(<primaryKey>, {
+      <paramColumns>
+    });
+  }
 }
 
-const <modelName> = new <modelName>Table(tableName, tablePrimaryKey);
-export default <modelName>;
+const <modelName>Model = new <modelName>Table(tableName, tablePrimaryKey);
+export default <modelName>Model;
 `;
 
+/**
+ *
+ * @param {*} classObject
+ */
 async function generateClassContent(classObject) {
-  const { modelName, tableName, primaryKey, fieldDefines } = classObject;
+  const { modelName, tableName, primaryKey, fieldDefines, columns } = classObject;
 
   const fields = Object.keys(fieldDefines);
+  let isUuid = false;
   let classContent = classTemplate.replaceAll("<modelName>", modelName);
   classContent = classContent.replaceAll("<primaryKey>", primaryKey);
   classContent = classContent.replaceAll("<tableName>", tableName);
@@ -61,13 +77,23 @@ async function generateClassContent(classObject) {
       const [wholeMatch, typeMatch] = matches;
       fieldType = typeMatch;
     }
+
     return { ...mapObj, [field]: fieldType };
   }, {});
 
   const pkType = fieldMap[primaryKey];
   classContent = classContent.replaceAll("<pkType>", pkType);
+  classContent = classContent.replaceAll("<isUuid>", pkType === "string");
 
-
+  // setup helper creaters
+  const columnParams = columns.filter(
+    (column) => column !== primaryKey && timestampFields.indexOf(column) < 0
+  );
+  const paramChain = columnParams.map((column) => {
+    return `${column}?: ${fieldMap[column]}`;
+  });
+  classContent = classContent.replaceAll("<paramChain>", paramChain.join(", "));
+  classContent = classContent.replaceAll("<paramColumns>", columnParams.join(", "));
 
   // Write to file.
   const fileName = `${modelName.toLowerCase()}Table.ts`;
@@ -117,6 +143,13 @@ function getTableMap(definesFilePath) {
   };
 }
 
+/**
+ * get primary key information of a table
+ *
+ * @param {*} connection
+ * @param {*} tableName
+ * @returns
+ */
 async function getTablePrimaryKey(connection, tableName = "") {
   let primaryKey = "";
 
@@ -134,6 +167,38 @@ async function getTablePrimaryKey(connection, tableName = "") {
   return primaryKey;
 }
 
+/**
+ *
+ * @param {*} connection
+ * @param {*} tableName
+ * @returns
+ */
+async function getColumnsOfTable(connection, tableName = "") {
+  const columns = [];
+
+  try {
+    const [tablesResult] = await connection.execute(
+      `SHOW COLUMNS FROM ${tableName.trim()}`
+    );
+
+    return tablesResult.map((table) => {
+      return table.Field;
+    });
+  } catch (dbError) {
+    console.error(`Error getting columns for ${tableName}:`, dbError);
+  }
+
+  return columns;
+}
+
+/**
+ * main function to generate table class files
+ *
+ * @param {*} definesFilePath
+ * @param {*} outputDir
+ * @param {*} dbConfig
+ * @returns
+ */
 async function generateTableClasses(definesFilePath, outputDir, dbConfig) {
   // Added dbConfig parameter back
 
@@ -152,13 +217,16 @@ async function generateTableClasses(definesFilePath, outputDir, dbConfig) {
   for (const modelName in tableClassMap) {
     const tableName = tableClassMap[modelName];
     const fieldDefines = modelMap[modelName];
+
     const primaryKey = await getTablePrimaryKey(connection, tableName);
+    const columns = await getColumnsOfTable(connection, tableName);
 
     const defineObject = {
       modelName,
       tableName,
       primaryKey,
       fieldDefines,
+      columns,
     };
 
     // Create the model file.
@@ -169,6 +237,11 @@ async function generateTableClasses(definesFilePath, outputDir, dbConfig) {
   await connection.end();
 }
 
+/**
+ * helper function if process is running in docker
+ *
+ * @returns
+ */
 function isRunningInDocker() {
   try {
     const cgroup = fs.readFileSync("/proc/1/cgroup", "utf8");
@@ -178,7 +251,10 @@ function isRunningInDocker() {
   }
 }
 
-// Example usage:
+/**
+ * executable variables
+ *
+ */
 const definesFilePath = "./src/models/mysql.defines.ts";
 const outputDir = "./src/models/tables";
 const dbConfig = {
@@ -186,7 +262,7 @@ const dbConfig = {
   user: process.env.MYSQL_USER,
   password: process.env.MYSQL_PASS,
   database: process.env.MYSQL_DATABASE,
-  port: process.env.MYSQL_PORT
+  port: process.env.MYSQL_PORT,
 };
 
 if (process.env.ENV === "dev") {
@@ -195,4 +271,5 @@ if (process.env.ENV === "dev") {
   }
 }
 
-generateTableClasses(definesFilePath, outputDir, dbConfig); // dbConfig being used here.
+// main function
+generateTableClasses(definesFilePath, outputDir, dbConfig);
