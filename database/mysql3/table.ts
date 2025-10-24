@@ -416,6 +416,25 @@ export class MysqlTable {
   }
 
   /**
+   * select an entry by id.
+   * 
+   * @param id 
+   * @param selectFields 
+   * @returns 
+   */
+  public async selectById(id: EbgMysqlIdType, selectFields = []) {
+    const db = this.getDbInstance();
+    const tbl = this.getTableName();
+    const pk = this.getPrimaryKey();
+
+    let query = db.selectFrom(tbl).where(pk, "=", id);
+    query = selectFields.length > 0 ? query.select(selectFields) : query.selectAll();
+
+    const entry = await query.executeTakeFirst();
+    return typeof entry === "undefined" ? null : entry;
+  }
+
+  /**
    * creates a new entry
    *
    * @param parameters
@@ -431,13 +450,12 @@ export class MysqlTable {
     const newEntry = await this.createSelectQuery()
       .where(this.getPrimaryKey(), "=", insertData?.insertId)
       .executeTakeFirst();
-    
+
     if (newEntry === undefined) {
       return null;
     }
 
     return newEntry;
-
 
     // const db = this.getDbInstance();
     // const insertParameters = this.buildParameters(parameters);

@@ -1,11 +1,11 @@
-import crypto from 'crypto';
+import crypto from "crypto";
 import { v4 as uuidv4 } from "uuid";
 
 /**
  * generate a random string
- * 
- * @param length 
- * @returns 
+ *
+ * @param length
+ * @returns
  */
 export const generateRandomString = (length: number) => {
   if (length <= 0) {
@@ -14,7 +14,7 @@ export const generateRandomString = (length: number) => {
 
   return crypto
     .randomBytes(Math.ceil(length / 2))
-    .toString('hex')
+    .toString("hex")
     .slice(0, length);
 };
 
@@ -40,8 +40,8 @@ export const makePossessive = (name: string) => {
 
 /**
  * generates a random UUID
- * probably just use crypto.randomUUID() ? 
- * 
+ * probably just use crypto.randomUUID() ?
+ *
  * @returns
  */
 export const generateUUID = () => uuidv4();
@@ -189,9 +189,9 @@ export const decodeBase64String = (base64String: string) =>
 
 /**
  * checks if a string is a valid url string
- * 
- * @param url 
- * @returns 
+ *
+ * @param url
+ * @returns
  */
 export const isValidUrl = (url: string) => {
   try {
@@ -200,4 +200,27 @@ export const isValidUrl = (url: string) => {
   } catch {
     return false;
   }
+};
+
+/**
+ * formats name components into a full name string
+ * 
+ * @param firstName 
+ * @param lastName 
+ * @param middleName 
+ * @param forceUpperCase 
+ * @returns 
+ */
+export const formatFullName = (
+  firstName: string,
+  lastName: string,
+  middleName = "",
+  forceUpperCase = false
+) => {
+  const name = [firstName, middleName, lastName]
+    .map((str) => str.trim())
+    .filter((str) => str.length > 0)
+    .join(" ");
+
+  return forceUpperCase ? name.toUpperCase() : name;
 };

@@ -22,12 +22,16 @@ export const tablePrimaryKey = "<primaryKey>";
 
 export interface <modelName>Interface extends Partial<BaseInterface> {
 }
+export type <modelName>Field = keyof <modelName>Interface;
 
 export class <modelName>Table extends MysqlTable {
   protected primaryKeyType = '<pkType>';
-  protected fields: (keyof <modelName>Interface)[] = <fields>;
+  protected fields: <modelName>Field[] = <fields>;
   protected isUuid = <isUuid>;
-  // protected fieldMap = <fieldMap>;
+
+  public get<modelName>(id: EbgMysqlIdType, selectFields: <modelName>Field[] = []): Promise<<modelName>Interface | null> {
+    return super.selectById(id, selectFields);
+  }
   
   public create(params: <modelName>Interface): Promise<<modelName>Interface | null> {
     return super.create(params)
