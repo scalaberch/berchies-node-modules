@@ -29,16 +29,20 @@ export class <modelName>Table extends MysqlTable {
   protected fields: <modelName>Field[] = <fields>;
   protected isUuid = <isUuid>;
 
-  public get<modelName>(id: EbgMysqlIdType, selectFields: <modelName>Field[] = []): Promise<<modelName>Interface | null> {
-    return super.selectById(id, selectFields);
-  }
-  
   public create(params: <modelName>Interface): Promise<<modelName>Interface | null> {
     return super.create(params)
   }
 
   public update(id: EbgMysqlIdType, params: <modelName>Interface) {
     return super.update(id, params)
+  }
+
+  public getByField(field: <modelName>Field, value: any, selectFields: <modelName>Field[] = []): Promise<<modelName>Interface | null> {
+    return super.selectByField(field, value, selectFields)
+  }
+
+  public get<modelName>(id: EbgMysqlIdType, selectFields: <modelName>Field[] = []): Promise<<modelName>Interface | null> {
+    return super.selectById(id, selectFields);
   }
 
   public create<modelName>(<paramChain>): Promise<<modelName>Interface | null> {
