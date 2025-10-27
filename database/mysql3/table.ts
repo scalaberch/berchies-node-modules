@@ -417,17 +417,29 @@ export class MysqlTable {
 
   /**
    * select an entry by id.
-   * 
-   * @param id 
-   * @param selectFields 
-   * @returns 
+   *
+   * @param id
+   * @param selectFields
+   * @returns
    */
   public async selectById(id: EbgMysqlIdType, selectFields = []) {
+    const pk = this.getPrimaryKey();
+    return this.selectByField(pk, id, selectFields);
+  }
+
+  /**
+   * select an entry by a single field.
+   *
+   * @param fieldName
+   * @param value
+   * @param selectFields
+   * @returns
+   */
+  public async selectByField(fieldName: string, value: any, selectFields = []) {
     const db = this.getDbInstance();
     const tbl = this.getTableName();
-    const pk = this.getPrimaryKey();
 
-    let query = db.selectFrom(tbl).where(pk, "=", id);
+    let query = db.selectFrom(tbl).where(fieldName, "=", value);
     query = selectFields.length > 0 ? query.select(selectFields) : query.selectAll();
 
     const entry = await query.executeTakeFirst();
