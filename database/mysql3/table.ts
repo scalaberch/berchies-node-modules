@@ -449,6 +449,7 @@ export class MysqlTable {
     // get the data.
     const newEntry = await this.createSelectQuery()
       .where(this.getPrimaryKey(), "=", insertData?.insertId)
+      .selectAll()
       .executeTakeFirst();
 
     if (newEntry === undefined) {
