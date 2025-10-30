@@ -107,6 +107,9 @@ export const createTransaction = async <T>(callback: (trx: Transaction<any>) => 
   });
 };
 
+export const chainQuery = async (tables: string[]) => {
+}
+
 export default {
   init,
   isInitialized,

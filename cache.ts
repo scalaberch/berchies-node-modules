@@ -20,6 +20,17 @@ const _env = getEnv();
 const _defaultLockTime = 120000; // 2 minutes
 const lockPrefix = `ebg_lock-${getEnvVariable("PROJ_NAME")}:`;
 
+interface SetSettings {
+  EX?: number;
+  PX?: number;
+  EXAT?: number;
+  PXAT?: number;
+  NX?: boolean;
+  XX?: boolean;
+  KEEPTTL?: boolean;
+  GET?: boolean;
+}
+
 const getCache = (): RedisClientType => {
   const cacheObject = getAppInstance("cache");
   if (cacheObject === null) {
@@ -130,7 +141,7 @@ const set = async (key: string, data: any, options: any = {}) => {
   if (!isCacheActive()) {
     return false;
   }
-  return await _cache.set(key, data, options);
+  return await _cache.set(key, data, { ...options });
 };
 
 // set a key for an object

@@ -50,8 +50,14 @@ const downloadFile = async (remotePath: string, downloadPath: string) => {
   });
 }
 
+const folderExists = (folderPath: string) => fs.existsSync(folderPath)
+
+const createFolder = (folderPath: string) => fs.mkdirSync(folderPath, { recursive: true })
+
 export default {
   isFileExtension,
   readCSVFile,
-  downloadFile
+  downloadFile,
+  folderExists,
+  createFolder
 };

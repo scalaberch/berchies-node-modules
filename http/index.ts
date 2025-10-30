@@ -42,7 +42,8 @@ const create = (config: any, appModules?: any) => {
       },
     })
   );
-  server.use(upload.any());
+
+  // server.use(upload.any()); // disable upload.any() globally since it might give performance overhead and security reasons (as it allows parsing files for all routes)
   server.use(useragent.express());
 
   // Apply the middlewares
