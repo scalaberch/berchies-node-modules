@@ -9,19 +9,22 @@ import Cron from "./cron/v3";
 import Slack from "./socials/slack";
 import Discord from "./discord";
 
-export type Modules =
-  | "queue"
-  | "logger"
-  | "mongodb"
-  | "moralis"
-  | "cron"
-  | "cache"
-  | "slack"
-  | "checkpoint"
-  | "mysqldb"
-  | "http"
-  | "prismadb"
-  | "discord";
+import { Modules } from "./defines";
+export { Modules }
+
+// export type Modules =
+//   | "queue"
+//   | "logger"
+//   | "mongodb"
+//   | "moralis"
+//   | "cron"
+//   | "cache"
+//   | "slack"
+//   | "checkpoint"
+//   | "mysqldb"
+//   | "http"
+//   | "prismadb"
+//   | "discord";
 
 /**
  * checkpoint api

@@ -59,12 +59,7 @@ export const encryptToSha256 = (input: any) => {
   return crypto.createHash("sha256").update(JSON.stringify(input)).digest("hex");
 };
 
-export const generateRandomString = (length: number) => {
-  return crypto
-    .randomBytes(Math.ceil(length / 2))
-    .toString("hex")
-    .slice(0, length);
-};
+
 
 export const sleep = (waitTime: number) => {
   return new Promise((res) => {
@@ -167,28 +162,6 @@ export const pickRandomFromArray = (array: any[]) => {
 };
 
 /**
- * hides middle content of a string with the padded characters showing
- * (i.e. mystring becomes mys...ing)
- *
- * @deprecated
- * @param hash
- * @param padLength
- * @returns
- */
-export const hideMiddleOfString = (hash: string, padLength = 4) => {
-  const strLen = hash.length;
-
-  if (strLen < padLength + 1) {
-    return hash;
-  }
-  if (strLen < padLength * 2 + 1) {
-    return `${hash}...`;
-  }
-
-  return `${hash.slice(0, padLength)}...${hash.slice(strLen - padLength)}`;
-};
-
-/**
  *
  * @param condition
  * @returns
@@ -270,24 +243,7 @@ export const slugify = (str) =>
 export const camelCaseToSnakeCase = (str) =>
   str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
 
-/**
- * converts snake case to camel case
- *
- * @deprecated
- * @param snakeStr
- * @returns
- */
-export const snakeCaseToCamelCase = (snakeStr) =>
-  snakeStr.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
 
-/**
- * check if string is a snake case
- *
- * @deprecated
- * @param str
- * @returns
- */
-export const isStringIsSnakeCase = (str: string) => /^[a-z]+(_[a-z]+)*$/.test(str);
 
 /**
  * capitalizing a string.
@@ -360,43 +316,48 @@ export const randomNumber = (min: number, max: number) => {
 };
 
 /**
+ * gets a boolean value based on the given probability (1:N or basically 1/N)
+ *
+ * @param probability
+ * @returns
+ */
+export const chance = (probability: number) => {
+  if (probability <= 0) return false;
+  if (probability >= 1) return true;
+
+  const random = crypto.getRandomValues(new Uint32Array(1))[0] / 0xffffffff;
+  return random < probability;
+};
+
+/**
  * a more secure generator for random numberes
  *
  * @param min
  * @param max
  * @returns
  */
-export const secureRandomNumber = (min: number, max: number) => {
-  return crypto.randomInt(min, max + 1);
-};
+export const secureRandomNumber = (min: number, max: number) =>
+  crypto.randomInt(min, max + 1);
 
 /**
  * @deprecated
- * @param string 
- * @returns 
+ * @param string
+ * @returns
  */
 export const stringHasBadWords = (string: string) => hasBadWords(string);
 
 /**
  * gets the key from an object given its value.
- * 
- * @param obj 
- * @param value 
- * @returns 
+ *
+ * @param obj
+ * @param value
+ * @returns
  */
 export const getKeyByValue = <T extends Record<string, unknown>>(
   obj: T,
   value: T[keyof T]
 ): keyof T | undefined =>
   (Object.keys(obj) as (keyof T)[]).find((key) => obj[key] === value);
-
-/**
- * gets the current timestamp with format YYYY-MM-DD HH:mm:ss
- *
- * @deprecated
- * @returns
- */
-export const getCurrentTimestamp = () => moment().format(timestampFormat);
 
 
 export const remotePathExists = async (path: string) => {
@@ -422,7 +383,31 @@ export const parseJSON = (jsonString: string, makeFallbackValueNull = true) => {
   return value;
 };
 
-///// put all deprecated functions below
+////////////////////////////////////////////////////////////
+////// put all deprecated functions below
+////// @todo: delete those below
+
+/**
+ * gets the current timestamp with format YYYY-MM-DD HH:mm:ss
+ *
+ * @deprecated
+ * @returns
+ */
+export const getCurrentTimestamp = () => moment().format(timestampFormat);
+
+
+/**
+ * 
+ * @deprecated
+ * @param length 
+ * @returns 
+ */
+export const generateRandomString = (length: number) => {
+  return crypto
+    .randomBytes(Math.ceil(length / 2))
+    .toString("hex")
+    .slice(0, length);
+};
 
 /**
  *
@@ -464,6 +449,49 @@ export const decodeBase64String = (base64String: string) =>
 export function padWithZeros(num: number, totalLength: number): string {
   return String(num).padStart(totalLength, "0");
 }
+
+/**
+ * hides middle content of a string with the padded characters showing
+ * (i.e. mystring becomes mys...ing)
+ *
+ * @deprecated
+ * @param hash
+ * @param padLength
+ * @returns
+ */
+export const hideMiddleOfString = (hash: string, padLength = 4) => {
+  const strLen = hash.length;
+
+  if (strLen < padLength + 1) {
+    return hash;
+  }
+  if (strLen < padLength * 2 + 1) {
+    return `${hash}...`;
+  }
+
+  return `${hash.slice(0, padLength)}...${hash.slice(strLen - padLength)}`;
+};
+
+/**
+ * converts snake case to camel case
+ *
+ * @deprecated
+ * @param snakeStr
+ * @returns
+ */
+export const snakeCaseToCamelCase = (snakeStr) =>
+  snakeStr.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+
+/**
+ * check if string is a snake case
+ *
+ * @deprecated
+ * @param str
+ * @returns
+ */
+export const isStringIsSnakeCase = (str: string) => /^[a-z]+(_[a-z]+)*$/.test(str);
+
+//////////////////
 
 /**
  * export default

@@ -1,22 +1,25 @@
-import express, { Express, application, Router, Request } from 'express';
-import bodyParser from 'body-parser';
-import helmet from 'helmet';
-import multer from 'multer';
-import applyCors from './cors';
+import express, { Express, application, Router, Request } from "express";
+import bodyParser from "body-parser";
+import helmet from "helmet";
+import multer from "multer";
+import applyCors from "./cors";
 
-import useragent from 'express-useragent';
-import { rateLimit } from 'express-rate-limit';
+import useragent from "express-useragent";
+import { rateLimit } from "express-rate-limit";
 
-import { notFoundHandler, httpRequestLog, tooManyRequestsHandler } from './handlers';
-import { loadRoutes, defaultRoute } from './router';
-import Middleware from './middlewares';
-import Checkpoint from './checkpoint';
-import Session from './session';
-import overrideSNSHeader from './middlewares/overrideSNSHeader';
+import { notFoundHandler, httpRequestLog, tooManyRequestsHandler } from "./handlers";
+import { loadRoutes, defaultRoute } from "./router";
+import Middleware from "./middlewares";
+import Checkpoint from "./checkpoint";
+import Session from "./session";
+import Websockets from "../websockets";
+import overrideSNSHeader from "./middlewares/overrideSNSHeader";
 
 const _globalRouteRpm = 240;
 const _healthCheckRpm = 5;
-export const port: Number = parseInt(process.env.PORT || '') || 3000;
+export const port: number = parseInt(process.env.PORT || "") || 3000;
+
+let isWebsocketsEnabled = false;
 
 /**
  * Creates an Express server
@@ -57,12 +60,17 @@ const create = (config: any, appModules?: any) => {
 
   // apply logging
   server.use(httpRequestLog);
-  server.set('trust proxy', true);
+  server.set("trust proxy", true);
 
   // setup session handling.
-  if (httpModules.indexOf('session') >= 0) {
+  if (httpModules.indexOf("session") >= 0) {
     // await Checkpoint(server);
     Session(server, appModules);
+  }
+
+  // setup websockets
+  if (httpModules.indexOf("websockets") >= 0) {
+    isWebsocketsEnabled = true;
   }
 
   // setup public folder
@@ -81,16 +89,16 @@ const create = (config: any, appModules?: any) => {
  */
 const start = (server: Express) => {
   return new Promise((resolve, reject) => {
-    const _server = server.listen(port, () => {
+    const _server = server.listen(port, async () => {
+      let websockets = null;
+
+      if (isWebsocketsEnabled) {
+        _server['ws'] = await Websockets.init(_server);
+      }
+
       resolve(_server);
     });
   });
-
-  const _server = server.listen(port, () => {
-    console.log('listening...');
-    // return Promise.resolve(true)
-  });
-  return Promise.resolve(_server);
 };
 
 /**
@@ -129,17 +137,17 @@ export const setRouteRateLimit = (reqsPerMinute: number) => {
  */
 const routes = async (server: Express, loadedModules: Array<any>, appModules) => {
   // Add up the health-checker route
-  server.get('/ebg-health-check', setRouteRateLimit(_healthCheckRpm), defaultRoute);
+  server.get("/ebg-health-check", setRouteRateLimit(_healthCheckRpm), defaultRoute);
 
   // add system routes.
-  if (loadedModules.indexOf('checkpoint') >= 0) {
+  if (loadedModules.indexOf("checkpoint") >= 0) {
     await Checkpoint(server, appModules);
   }
 
   // iterate to all routes found.
   const hasIndex = await loadRoutes(server);
   if (hasIndex < 2) {
-    server.get('/', defaultRoute);
+    server.get("/", defaultRoute);
   }
 
   // Last, add up the not found handler.
@@ -153,12 +161,12 @@ const routes = async (server: Express, loadedModules: Array<any>, appModules) =>
  */
 export const getRequestIPAddress = (req: Request) => {
   let ips =
-    req.headers['cf-connecting-ip'] ||
-    req.headers['x-real-ip'] ||
-    req.headers['x-forwarded-for'] ||
+    req.headers["cf-connecting-ip"] ||
+    req.headers["x-real-ip"] ||
+    req.headers["x-forwarded-for"] ||
     req.socket.remoteAddress ||
     req.ip ||
-    '';
+    "";
 
   return ips;
 };

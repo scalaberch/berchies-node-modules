@@ -1,5 +1,5 @@
-import NodeConfig from "./database/models/NodeConfig";
 import _ from "lodash";
+import NodeConfig from "./database/models/NodeConfig";
 
 export const ConfigModel = NodeConfig;
 
@@ -20,7 +20,7 @@ const getConfigObject = async () => {
 const isInitialized = async () => {
   const config = await getConfigObject();
   return config !== null;
-}
+};
 
 /**
  * Gets a config variable

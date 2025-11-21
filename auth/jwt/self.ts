@@ -37,6 +37,13 @@ interface BaseJWTPayload {
 }
 
 /**
+ * 
+ * @param token 
+ * @returns 
+ */
+export const verifyAccessToken = (token: string) => jwt.verify(token, ACCESS_SECRET);
+
+/**
  * express middleware to parse jwt refresh tokens during route calls.
  * most likely being used on token refresh action
  *

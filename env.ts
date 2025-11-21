@@ -1,12 +1,5 @@
 import _ from "lodash";
-
-export enum Environment {
-  dev = "dev",
-  test = "test",
-  staging = "staging",
-  prod = "prod",
-  production = "production", // alias of prod
-}
+import { Environment } from "./defines";
 
 type Production = Environment.prod | Environment.production;
 
@@ -51,24 +44,24 @@ export const getEnv = (): Environment => {
 
 /**
  * helper function to get the "tag" of a certain project environemtn
- * 
- * @returns 
+ *
+ * @returns
  */
 export const getEnvTag = () => {
   const env = getEnv();
   if (env === Environment.prod || env === Environment.production) {
-    return ""
+    return "";
   }
   return env;
 };
 
 /**
  * gets an environment variable from process.env
- * 
- * @param variable 
- * @param isANumber 
- * @param defaultValue 
- * @returns 
+ *
+ * @param variable
+ * @param isANumber
+ * @param defaultValue
+ * @returns
  */
 export const getEnvVariable = (
   variable: string,
@@ -82,15 +75,38 @@ export const getEnvVariable = (
   return value;
 };
 
+/**
+ * check if dev environment
+ *
+ * @returns
+ */
 export const isDevEnv = () => getEnv() === Environment.dev;
-export const isTestEnv = () => getEnv() === Environment.test;
-export const isProductionEnv = () => {
-  const _env = getEnv();
-  return _env === "production" || _env === "prod";
-};
 
+/**
+ * check if test environment
+ *
+ * @returns
+ */
+export const isTestEnv = () => getEnv() === Environment.test;
+
+/**
+ * check if production environment
+ *
+ * @returns
+ */
+export const isProductionEnv = () =>
+  getEnv() === Environment.production || getEnv() === Environment.prod;
+
+/**
+ * alias of isProductionEnv function
+ *
+ * @returns
+ */
 export const isProdEnv = isProductionEnv; // just an alias
 
-
-
+/**
+ * alias of getEnvVariable function
+ *
+ * @returns
+ */
 export const getEnvVar = getEnvVariable;
