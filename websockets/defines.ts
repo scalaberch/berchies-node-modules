@@ -3,8 +3,9 @@ import path from "path";
 import { IncomingMessage, Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { generateUUID } from "@modules/strings";
+import { isRunningInTypeScript } from "@modules/server";
 
-const mainSocketsSrc = "./src/sockets.ts";
+const mainSocketsSrc = "./src/sockets";
 
 export interface WSConfig {
   uri: string;
@@ -45,9 +46,13 @@ export class WSModule {
   }
 
   public async loadHandler() {
-    if (fs.existsSync(mainSocketsSrc)) {
-      const module = await import(path.resolve(mainSocketsSrc));
+    const srcFile = `${mainSocketsSrc}.${isRunningInTypeScript() ? 'ts' : 'js'}`;
+
+    if (fs.existsSync(srcFile)) {
+      const module = await import(path.resolve(srcFile));
       this.handler = module.default ?? module; // support both default and named export
+    } else {
+      console.warn('Module not loaded!');
     }
   }
 
