@@ -130,8 +130,8 @@ export class WSModule {
       }
 
       clients.forEach((client: WSClient) => {
-      //   // if (ws.isAlive === false) return ws.terminate();
-      //   //   // ws.isAlive = false;
+        //   // if (ws.isAlive === false) return ws.terminate();
+        //   //   // ws.isAlive = false;
         client.ping();
       });
     }, PING_INTERVAL);
@@ -158,16 +158,13 @@ export class WSModule {
     }
 
     const clients = Object.values(this.clients);
-    
 
     clients.forEach((client) => {
       client.send(data);
     });
   }
 
-  public getAllClients() {
-
-  }
+  public getAllClients() {}
 }
 
 export class WSClient {
