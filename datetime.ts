@@ -22,7 +22,20 @@ export const DateTime = (input?: moment.MomentInput): DateTimeObject => {
   if (typeof input === "number" && !isNaN(input)) {
     return moment.unix(input).tz(tz);
   }
-  return moment(input).tz(tz);
+
+  // if (typeof input === 'undefined') {
+  //   input = null;
+  // }
+
+  let datetime;
+
+  try {
+    datetime = moment(input).tz(tz);
+  } catch (err) {
+    // do nothing.
+  }
+
+  return datetime;
 };
 
 /**

@@ -172,11 +172,14 @@ export class WSClient {
   public id: string;
   public user: any;
   public isAlive: boolean;
+  public jwt: string;
+  public metadata: any;
 
   constructor(socket: WebSocket) {
     this.socket = socket;
     this.id = generateUUID();
     this.isAlive = true;
+    this.metadata = {};
   }
 
   public async send(data: Partial<WSMessageOut>) {
@@ -209,5 +212,9 @@ export class WSClient {
 
   public setAlive(alive: boolean) {
     this.isAlive = alive;
+  }
+
+  public setJwt(jwt: string) {
+    this.jwt = jwt;
   }
 }
