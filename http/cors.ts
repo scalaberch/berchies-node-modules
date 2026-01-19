@@ -3,10 +3,10 @@ import { Express } from "express";
 import { isDevEnv } from "../env";
 
 const applyCors = (server: Express, config: any) => {
-  if (isDevEnv()) {
-    // @todo: might wanna check this one first for vulns?
-    return server.use(cors());
-  }
+  // if (isDevEnv()) {
+  //   // @todo: might wanna check this one first for vulns?
+  //   return server.use(cors());
+  // }
 
   // server.use()
   server.use(cors({
